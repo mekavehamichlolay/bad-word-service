@@ -16,6 +16,8 @@ const (
 	TAV          = 'ת'
 	ETNAHTA      = '֑'
 	QAMATS_QATAN = 'ׇ'
+	COMMA        = ','
+	DOT          = '.'
 )
 
 func IsNiqqud(r rune) bool {
@@ -47,19 +49,26 @@ func IsExpectedAsCharacter(letter rune) bool {
 }
 
 func IsEndOfWordSign(letter rune) bool {
-	return !unicode.IsLetter(letter) && !unicode.IsNumber(letter)
+	return unicode.IsSpace(letter) ||
+		letter == HYPHEN ||
+		letter == QUOTE ||
+		letter == DOUBLE_QUOTE ||
+		letter == UNDERSCORE ||
+		letter == COMMA ||
+		letter == DOT ||
+		!IsExpectedAsCharacter(letter)
 }
 
 func ToUpperCase(letter rune) rune {
 	if IsSmall(letter) {
-		return letter - 32
+		return letter &^ 32
 	}
 	return letter
 }
 
 func ToLowerCase(letter rune) rune {
 	if IsCapital(letter) {
-		return letter + 32
+		return letter | 32
 	}
 	return letter
 }

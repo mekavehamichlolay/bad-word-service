@@ -33,7 +33,7 @@ The special syntax consists of the following elements:
 - '$': Denotes the end of a word.
 - '[' and ']': Encloses a group of optional characters.
 - '?': Indicates that the preceding optional characters are optional and can be present zero or one time.
-- ',', '.', '"', "'" " " "_", and '\' are also considered as word characters.
+- '"' "'" " " "_", and '\' are also considered as word characters.
 
 Examples of Special Syntax:
 
@@ -43,7 +43,7 @@ Examples of Special Syntax:
 4. "[abc]?example": Matches any word that contains "example" or contains either 'a', 'b', or 'c', followed by "example".
 5. "^[abc]?example$": Matches any word that either starts with 'a', 'b', or 'c', followed by "example" or just starts with "example", and ends there.
 
-Note: The special characters ',', '.', '"', "'" " " "_", and '\' are also considered as word characters.
+Note: The special characters '"' "'" " " "_", and '\' are also considered as word characters.
 
 */
 
@@ -73,9 +73,7 @@ func NewTree() TreeInterface {
 
 type TreeInterface interface {
 	AddWord(word string, dontStartWith []rune, dontFinishWith []rune) error
-
 	HasWord(text string) [][2]uint
-
 	Has(word string) bool
 }
 
@@ -109,7 +107,7 @@ func add(word string, node *Node) ([]*Node, error) {
 	if len(word) == 0 {
 		return nil, fmt.Errorf("you passed an empty string")
 	}
-	char := rune(word[0])
+	char := utils.ToLowerCase(rune(word[0]))
 	if utils.IsExpectedAsCharacter(char) {
 		if _, ok := node.Children[char]; !ok {
 			node.Children[char] = &Node{Children: make(map[rune]*Node)}
@@ -141,7 +139,7 @@ func add(word string, node *Node) ([]*Node, error) {
 			if len(word) < 2 {
 				return nil, fmt.Errorf("you have an open bracket without a closing bracket")
 			}
-			char = rune(word[0])
+			char = utils.ToLowerCase(rune(word[0]))
 			if !utils.IsExpectedAsCharacter(char) {
 				return nil, fmt.Errorf("you have a non character in the optional part %s", word)
 			}
@@ -196,16 +194,13 @@ func appendMultiOptionChars(chars []rune, node *Node, isWordEnd bool) []*Node {
 
 func (t *Tree) HasWord(text string) [][2]uint {
 	var result [][2]uint
-	for p, char := range text {
-		if p == 0 {
+	for p := range text {
+		if p == 0 || text[p-1] == '\n' {
 			if child, ok := t.Root.Children[' ']; ok {
 				if returned := walker(child, text, uint16(p), uint16(p)); returned != 0 {
 					result = append(result, [2]uint{uint(p), uint(returned)})
 				}
 			}
-		}
-		if !utils.IsExpectedAsCharacter(char) {
-			continue
 		}
 		if returned := walker(t.Root, text, uint16(p), uint16(p)); returned != 0 {
 			result = append(result, [2]uint{uint(p), uint(returned)})
@@ -215,7 +210,11 @@ func (t *Tree) HasWord(text string) [][2]uint {
 }
 
 func walker(node *Node, text string, startPosition, curPosition uint16) uint16 {
-	newNode, ok := node.Children[rune(text[curPosition])]
+	char := utils.ToLowerCase(rune(text[curPosition]))
+	if !utils.IsExpectedAsCharacter(char) {
+		char = ' '
+	}
+	newNode, ok := node.Children[char]
 	if !ok {
 		return 0
 	}
@@ -228,14 +227,14 @@ func walker(node *Node, text string, startPosition, curPosition uint16) uint16 {
 		}
 		if len(newNode.DoesNotStartWith) > 0 && startPosition > 0 {
 			for _, char := range newNode.DoesNotStartWith {
-				if rune(text[startPosition-1]) == char {
+				if utils.ToLowerCase(rune(text[startPosition-1])) == char {
 					return 0
 				}
 			}
 		}
 		if len(newNode.DoesNotEndWith) > 0 && curPosition+1 < uint16(len(text)-1) {
 			for _, char := range newNode.DoesNotEndWith {
-				if rune(text[curPosition+1]) == char {
+				if utils.ToLowerCase(rune(text[curPosition+1])) == char {
 					return 0
 				}
 			}
@@ -262,8 +261,4 @@ func has(node *Node, word string) bool {
 		return node.Children[char].IsFullWord
 	}
 	return has(child, word[1:])
-}
-
-func Walker(node *Node, text string, startPosition, curPosition uint16) uint16 {
-	return walker(node, text, startPosition, curPosition)
 }

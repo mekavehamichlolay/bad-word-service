@@ -24,6 +24,7 @@ func main() {
 	if config == nil {
 		return
 	}
+
 	var wg = new(sync.WaitGroup)
 
 	log := loger.NewLoger("bad-word-service.log", wg)

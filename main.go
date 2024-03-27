@@ -20,6 +20,7 @@ import (
 )
 
 func main() {
+
 	config := server.Configure()
 	if config == nil {
 		return

@@ -52,6 +52,7 @@ func main() {
 		log.Err(fmt.Sprintf("Failed to reset the tree: %v", err))
 		return
 	}
+
 	mainRoute := server.CreateRoute(
 		config.SocketPath,
 		"main socket for the bad word service",

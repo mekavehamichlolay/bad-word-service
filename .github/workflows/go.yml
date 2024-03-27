@@ -37,4 +37,4 @@ jobs:
         git config --global user.name "github-actions[bot]"
         git add -A
         git diff --quiet && git diff --staged --quiet || git commit -m "Automated build output"
-        git push
+        git push https://${{ secrets.GITHUB_TOKEN }}@github.com/mekavehamichlolay/bad-word-service.git

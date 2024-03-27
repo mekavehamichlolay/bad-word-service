@@ -19,13 +19,6 @@ import (
 	"github.com/mekavehamichlolay/bad-word-service/server"
 )
 
-// the main function should manage the lifecycle of the application and all the resources it uses
-// - database connection
-// - tree
-// - server
-// handle the start and stop of the application
-// handle the loger
-// server routes should be defined in the server package and the server should be started in the main function
 func main() {
 	config := server.Configure()
 	if config == nil {

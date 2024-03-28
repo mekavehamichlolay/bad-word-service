@@ -6,7 +6,9 @@ import (
 	"fmt"
 	"io"
 	"net"
+	"os"
 	"os/signal"
+	"runtime/pprof"
 	"sync"
 	"syscall"
 	"time"
@@ -25,7 +27,7 @@ func main() {
 		return
 	}
 
-	var wg = new(sync.WaitGroup)
+	wg := new(sync.WaitGroup)
 
 	log := loger.NewLoger("bad-word-service.log", wg)
 	defer log.Close()
@@ -62,6 +64,16 @@ func main() {
 				log.Err(fmt.Sprintf("Failed to set deadline: %v", err))
 				return
 			}
+			f, err := os.Create("cpu_profile.prof")
+			if err != nil {
+				panic(err)
+			}
+			defer f.Close()
+
+			if err := pprof.StartCPUProfile(f); err != nil {
+				panic(err)
+			}
+			defer pprof.StopCPUProfile()
 			var buffer = make([]byte, 512)
 			var text string
 			for {

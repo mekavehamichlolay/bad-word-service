@@ -6,9 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net"
-	"os"
 	"os/signal"
-	"runtime/pprof"
 	"sync"
 	"syscall"
 	"time"
@@ -30,6 +28,9 @@ func main() {
 	wg := new(sync.WaitGroup)
 
 	log := loger.NewLoger("bad-word-service.log", wg)
+	if log == nil {
+		return
+	}
 	defer log.Close()
 
 	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
@@ -60,20 +61,11 @@ func main() {
 		"main socket for the bad word service",
 		func(c net.Conn) {
 			defer c.Close()
-			if err := c.SetDeadline(time.Now().Add(1 * time.Second)); err != nil {
+
+			if err := c.SetDeadline(time.Now().Add(10 * time.Second)); err != nil {
 				log.Err(fmt.Sprintf("Failed to set deadline: %v", err))
 				return
 			}
-			f, err := os.Create("cpu_profile.prof")
-			if err != nil {
-				panic(err)
-			}
-			defer f.Close()
-
-			if err := pprof.StartCPUProfile(f); err != nil {
-				panic(err)
-			}
-			defer pprof.StopCPUProfile()
 			var buffer = make([]byte, 512)
 			var text string
 			for {
@@ -90,6 +82,9 @@ func main() {
 					break
 				}
 				text += string(buffer[:lengthe])
+				if lengthe < 512 {
+					break
+				}
 			}
 			positions := tree.HasWord(text)
 			jsoned, err := json.Marshal(positions)
@@ -132,6 +127,7 @@ func main() {
 		cancel()
 	}
 	wg.Wait()
+	cancel()
 	log.Info("Server stopped")
 	wg.Wait()
 }

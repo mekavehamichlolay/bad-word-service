@@ -3,6 +3,7 @@ package server
 import (
 	"fmt"
 	"os"
+	"strings"
 )
 
 type Config struct {
@@ -16,7 +17,7 @@ type Config struct {
 }
 
 func Configure() *Config {
-
+	loadEnvFromFile()
 	socketPath := os.Getenv("SOCKET_PATH")
 	dbType := os.Getenv("DB_TYPE")
 	dbName := os.Getenv("DB_NAME")
@@ -50,5 +51,35 @@ func Configure() *Config {
 		SocketPath:         socketPath,
 		DBType:             dbType,
 		DBConnectionString: dbConnectionString,
+	}
+}
+
+func loadEnvFromFile() {
+	if len(os.Args) < 2 {
+		fmt.Println("ENV_FILE environment variable is required")
+		return
+	}
+	filePath := os.Args[1]
+	if filePath == "" {
+		fmt.Println("ENV_FILE environment variable is required")
+		return
+	}
+	text, err := os.ReadFile(filePath)
+	if err != nil {
+		fmt.Println("Failed to read the file")
+		return
+	}
+	lines := strings.Split(string(text), "\n")
+	for _, line := range lines {
+		parts := strings.Split(line, "=")
+		if len(parts) != 2 {
+			continue
+		}
+		if strings.HasPrefix(parts[0], "#") {
+			continue
+		}
+		key := strings.TrimSpace(parts[0])
+		value := strings.TrimSpace(parts[1])
+		os.Setenv(key, value)
 	}
 }

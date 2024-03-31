@@ -163,7 +163,6 @@ func (t *Tree) HasWord(text string) [][2]uint {
 	var result [][2]uint
 	runeText := []rune(text)
 	t.mutex.RLock()
-	defer t.mutex.RUnlock()
 	for _, length := range t.Sizes {
 	wordWalker:
 		for i := 0; i < len(runeText)-length; i++ {
@@ -231,9 +230,21 @@ func (tree *Tree) Reset(ctx context.Context, conn *sql.Conn) error {
 	return nil
 }
 
+func (t *Tree) Set(words [][3][]rune) error {
+	var errores []error = make([]error, 0)
+	for _, word := range words {
+		if err := t.AddWord(word[0], word[1], word[2]); err != nil {
+			errores = append(errores, err)
+		}
+	}
+	if len(errores) > 0 {
+		return fmt.Errorf("errors: %v", errores)
+	}
+	return nil
+}
+
 func (t *Tree) set(res *sql.Rows) error {
 	t.mutex.Lock()
-	defer t.mutex.Unlock()
 	t.Children = nil
 	t.Sizes = nil
 	t.Children = make(map[string]*Node)
